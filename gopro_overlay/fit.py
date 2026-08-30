@@ -107,4 +107,10 @@ def load_timeseries(filepath: Path, units):
             else:
                 pass
 
+        for frame in (f for f in ff if f.frame_type == fitdecode.FIT_FRAME_DEFINITION):
+            if frame.name == 'session':
+                for field in frame.fields:
+                    if field.name == "total_distance":
+                        print("total_distance = {0}".format(field.value))
+
     return ts
