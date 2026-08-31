@@ -285,6 +285,7 @@ def metric_accessor_from(name: str) -> Callable[[Entry], Optional[pint.Quantity]
         "odo": lambda e: e.odo if e.odo is not None else e.codo,
         "codo": lambda e: e.codo,
         "dist": lambda e: e.dist,
+        "total_distance": lambda e: e.total_distance,
         "azi": lambda e: e.azi,
         "cog": lambda e: e.cog,
 
