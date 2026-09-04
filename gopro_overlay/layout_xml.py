@@ -275,6 +275,7 @@ def metric_accessor_from(name: str) -> Callable[[Entry], Optional[pint.Quantity]
         "hr": lambda e: e.hr,
         "cadence": lambda e: e.cad,
         "power": lambda e: e.power,
+        "norm_power": lambda e: e.norm_power,
         "speed": lambda e: e.speed if e.speed is not None else e.cspeed,
         "cspeed": lambda e: e.cspeed,
         "accel": lambda e: e.accel,

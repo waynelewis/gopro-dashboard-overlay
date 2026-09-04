@@ -1,6 +1,10 @@
 import bisect
 from pathlib import Path
 
+import numpy as np
+import collections
+import math
+
 import fitdecode
 
 from gopro_overlay.entry import Entry
@@ -32,6 +36,7 @@ interpret = {
     "front_gear_num": lambda v, u: {"gear_front": u.Quantity(v)},
     "unknown_108": lambda v, u: {"respiration": u.Quantity(v / 100, u.brpm)},
     "total_distance": lambda v, u: {"total_distance": u.Quantity(v, u.m)},
+    "norm_power": lambda v, u: {"norm_power": u.Quantity(v, u.watt)},
 }
 
 
@@ -41,6 +46,14 @@ def load_timeseries(filepath: Path, units):
     persistent_events = {}
     persistent_event_times = []
 
+    power_buffer = collections.deque(maxlen=30)
+    for i in range(0,30):
+        power_buffer.append(0)
+
+    power_val_count = 0
+    power_val_sum = 0
+    norm_power_sum = 0
+
     last_ts_event = None
 
     with fitdecode.FitReader(filepath) as ff:
@@ -48,7 +61,7 @@ def load_timeseries(filepath: Path, units):
             if frame.name == 'session':
                 for field in frame.fields:
                     if field.name == "total_distance":
-                        print("total_distance = {0}".format(field.value))
+                        #print("total_distance = {0}".format(field.value))
                         total_distance = field.value
 
 
@@ -83,6 +96,29 @@ def load_timeseries(filepath: Path, units):
                     else:
                         if field.name in interpret and field.value is not None:
                             items.update(**interpret[field.name](field.value, units))
+
+                    if field.name == "power":
+
+                        power_val_sum += field.value - power_buffer.popleft()
+                        power_buffer.append(field.value)
+                        power_val_count += 1
+                        if power_val_count < 30:
+                            power_avg = power_val_sum / power_val_count
+                        else:
+                            power_avg = power_val_sum / 30
+
+                        norm_power_sum += math.pow(field.value, 4)
+                        norm_power_avg = norm_power_sum / power_val_count
+                        if power_val_count < 30:
+                            norm_power = 0
+                        else:
+                            norm_power = math.pow(norm_power_avg, 0.25)
+
+                        #print("power value count = {0:4d}".format(power_val_count))
+                        #print("30s avg. power = {0:4d}".format(round(power_avg)))
+                        #print("normalized power = {0:4d}".format(round(norm_power)))
+
+                        items.update(**interpret["norm_power"](norm_power, units))
 
                 if "lat" in items and "lon" in items:
                     items["point"] = Point(lat=items["lat"], lon=items["lon"])
