@@ -98,28 +98,30 @@ def load_timeseries(filepath: Path, units):
                             items.update(**interpret[field.name](field.value, units))
 
                     if field.name == "power":
+                        if isinstance(field.value, (int)):
 
-                        power_val_sum += field.value - power_buffer.popleft()
-                        power_buffer.append(field.value)
-                        power_val_count += 1
+                            print("power = {0}".format(field.value))
+                            power_val_sum += field.value - power_buffer.popleft()
+                            power_buffer.append(field.value)
+                            power_val_count += 1
 
-                        if power_val_count >= 30:
-                            power_avg = power_val_sum / 30
-                            norm_power_sum += math.pow(power_avg, 4)
-                            norm_power_avg = norm_power_sum / (power_val_count - 30 + 1)
-                            norm_power = math.pow(norm_power_avg, 0.25)
-                        else:
-                            norm_power = 0
-                            power_avg = power_val_sum / power_val_count
+                            if power_val_count >= 30:
+                                power_avg = power_val_sum / 30
+                                norm_power_sum += math.pow(power_avg, 4)
+                                norm_power_avg = norm_power_sum / (power_val_count - 30 + 1)
+                                norm_power = math.pow(norm_power_avg, 0.25)
+                            else:
+                                norm_power = 0
+                                power_avg = power_val_sum / power_val_count
 
 
-                        print("power value sum = {0:4d}".format(power_val_sum))
-                        print("power value count = {0:4d}".format(power_val_count))
-                        print("30s avg. power = {0:4d}".format(round(power_avg)))
-                        print("normalized power = {0:4d}".format(round(norm_power)))
-                        print()
+                            print("power value sum = {0:4d}".format(power_val_sum))
+                            print("power value count = {0:4d}".format(power_val_count))
+                            print("30s avg. power = {0:4d}".format(round(power_avg)))
+                            print("normalized power = {0:4d}".format(round(norm_power)))
+                            print()
 
-                        items.update(**interpret["norm_power"](norm_power, units))
+                            items.update(**interpret["norm_power"](norm_power, units))
 
                 if "lat" in items and "lon" in items:
                     items["point"] = Point(lat=items["lat"], lon=items["lon"])
